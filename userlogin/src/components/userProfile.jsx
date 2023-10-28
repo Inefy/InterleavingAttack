@@ -1,7 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+
 const UserProfile = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+
   // Replace this with your user data or retrieve it from an API
   const user = {
     name: 'John Doe',
@@ -9,13 +11,12 @@ const UserProfile = () => {
     // Add more user information here
   };
 
-    const handleClick = () => {
-        localStorage.removeItem('token');
-        navigate('/userlogin');
-    }
+  const handleLogout = () => {
+    navigate('/userlogin');
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-black text-white">
+    <div className="min-h-screen flex items-center justify-center bg-black text-black">
       <div className="bg-white rounded-lg p-8 shadow-lg">
         <h1 className="text-2xl mb-4">User Profile</h1>
         <div className="mb-4">
@@ -25,8 +26,8 @@ const UserProfile = () => {
           <strong>Email:</strong> {user.email}
         </div>
         {/* Add more user information here */}
-        <button onClick={handleClick} className="w-full py-3 bg-black text-white rounded-lg">
-         Log out
+        <button onClick={handleLogout} className="w-full py-3 bg-red-500 text-white rounded-lg">
+          Log out
         </button>
       </div>
     </div>
