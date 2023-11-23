@@ -15,13 +15,6 @@ app.get('/', (req, res) => {
   res.send('Shell Server is running');
 });
 
-// Example POST route for login
-app.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  console.log('Login Attempt:', email, password);
-  // Add your authentication logic here
-  res.status(200).json({ message: 'Login successful' });
-});
 
 // Start the server
 app.listen(port, () => {

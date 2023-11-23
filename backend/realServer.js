@@ -15,13 +15,6 @@ app.get('/', (req, res) => {
   res.send('Real Server is running');
 });
 
-// Example POST route for 2FA (two-factor authentication)
-app.post('/2fa', (req, res) => {
-  const { code } = req.body;
-  console.log('2FA Code:', code);
-  // Add your 2FA verification logic here
-  res.status(200).json({ message: '2FA successful' });
-});
 
 // Start the server
 app.listen(port, () => {
