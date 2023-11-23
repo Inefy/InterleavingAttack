@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-// import { useNavigate } from 'react-router-dom';
-const UserLogin = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const navigate = useNavigate();
-    const handleLogin = () => {
-    // Replace this with your user login logic
+import { Link, useNavigate } from 'react-router-dom';
 
-    if (username === 'admin' && password === 'admin') {
-          navigate('/userprofile');
-      
+import auth from '../firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+
+const UserLogin = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, username, password);
+      navigate('/userprofile');
+    } catch (error) {
+      console.log(error);
     }
-    };
+  }
+
 
   return (
     <div className="flex items-center justify-center h-screen bg-black text-gray">
@@ -32,9 +37,17 @@ const UserLogin = () => {
           onChange={(e) => setPassword(e.target.value)}
           className="w-full py-2 px-3 rounded-lg mb-4 border-none bg-gray-200"
         />
-        <button onClick={handleLogin} className="w-full py-3 bg-black text-white rounded-lg">
-      Login
-    </button>
+        <button onClick={handleLogin} className="w-full py-3 bg-black text-white rounded-lg mb-2">
+          Login
+        </button>
+        <p className="text-center text-gray-500">
+          Don't have an account?{' '}
+          <Link to="/signup">
+            <button className="text-blue-500">
+              Sign Up
+            </button>
+          </Link>
+        </p>
       </div>
     </div>
   );
