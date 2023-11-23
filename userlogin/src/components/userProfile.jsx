@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, signOut } from 'firebase/auth';
+import { getAuth, signOut, updateProfile, sendEmailVerification } from 'firebase/auth';
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -37,6 +37,27 @@ const UserProfile = () => {
     }
   };
 
+  const handleEnableTwoFactor = async () => {
+    try {
+      // Enable two-factor authentication logic
+      // This is a simplified example, and you should refer to Firebase documentation for the correct implementation
+      // You might want to use functions like `updateProfile`, `sendEmailVerification`, etc.
+      const user = auth.currentUser;
+
+      // Update the user's profile to indicate that two-factor authentication is enabled
+      await updateProfile(user, {
+        twoFactorEnabled: true,
+      });
+
+      // Send an email verification to complete the two-factor authentication setup
+      await sendEmailVerification(user);
+
+      // You might want to redirect the user to a confirmation page or handle the verification in a different way
+    } catch (error) {
+      console.error('Error enabling two-factor authentication:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-black">
       <div className="bg-white rounded-lg p-8 shadow-lg">
@@ -52,6 +73,9 @@ const UserProfile = () => {
           </div>
         )}
         {/* Add more user information here */}
+        <button onClick={handleEnableTwoFactor} className="w-full py-3 bg-blue-500 text-white rounded-lg mb-2">
+          Enable Two-Factor Authentication
+        </button>
         <button onClick={handleLogout} className="w-full py-3 bg-red-500 text-white rounded-lg">
           Log out
         </button>
