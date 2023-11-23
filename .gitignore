@@ -1,6 +1,7 @@
 # Node modules
 fake/node_modules/
 real/node_modules/
+backend/node_modules
 
 # Environment files
 .env
