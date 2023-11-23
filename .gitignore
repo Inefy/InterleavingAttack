@@ -1,1 +1,38 @@
-userlogin/node_modules
+# Node modules
+fake/node_modules/
+real/node_modules/
+
+# Environment files
+.env
+
+# Build outputs
+/build
+/dist
+
+# OS generated files
+.DS_Store
+**/.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE / Editors
+.vscode/
+.idea/
+
+# Data files that don't need to be tracked
+*.DataURI
+
+# Cache
+.cache/
+*.cache
+
+# Miscellaneous
+/public/favicon.ico
+/public/logo192.png
+/public/logo512.png
+/public/manifest.json
+/public/robots.txt
