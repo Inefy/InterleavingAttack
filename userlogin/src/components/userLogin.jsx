@@ -1,54 +1,93 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import auth from '../firebase';
+
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   sendEmailVerification,
-  getAdditionalUserInfo,
-  onAuthStateChanged,
+  PhoneAuthProvider, 
+  getMultiFactorResolver,
+  PhoneMultiFactorGenerator,
+  TotpMultiFactorGenerator,
+  getAuth,
+  RecaptchaVerifier,
+  
 } from 'firebase/auth';
 
+import {auth} from '../firebase';
+
+
+
+// firebase.auth().languageCode = 'en';  
+// firebase.auth().settings.appVerificationDisabledForTesting = true;
 const UserLogin = () => {
+  
+  
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [verificationMessage, setVerificationMessage] = useState(null);
-  
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   if (username) {
-  //     const unsubscribe = onAuthStateChanged(auth, (user) => {
-  //       if (user && !user.emailVerified) {
-  //         setVerificationMessage('Please verify your email. Check your inbox for a verification email.');
-  //       } else {
-  //         setVerificationMessage(null);
-  //       }
-  //     });
-  
-  //     return () => unsubscribe();
-  //   }
-  // }, [username]);
+  const recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+    'size': 'invisible',
+    'callback': (response) => {
+      // reCAPTCHA solved, allow signInWithPhoneNumber.
+      // ...
+    }
+  }, auth);
+
+
 
   const handleLogin = async () => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, username, password);
-      const user = userCredential.user;
-      const additionalUserInfo = getAdditionalUserInfo(userCredential);
-      
-      if (additionalUserInfo?.isNewUser) {
-        // Navigate to the user profile page or any other desired route
+    
+
+    signInWithEmailAndPassword(auth, username, password)
+    .then(function (userCredential) {
+        // User is not enrolled with a second factor and is successfully
+        // signed in.
+        // ...
+
         navigate('/userprofile');
-      } else {
-        // Navigate to the user profile page or any other desired route
-        navigate('/userprofile');
-      }
-    }
-    catch (error) {
-      console.log(error);
-    }
+    })
+    .catch(function (error) {
+        if (error.code === 'auth/multi-factor-auth-required') {
+            // User is enrolled with multi-factor auth but a second factor
+            // is required to complete sign-in.
+            const resolver = getMultiFactorResolver(auth,error);
+            const multiFactorHints = resolver.hints;
+            if (multiFactorHints[0].factorId==='phone') {
+                const phoneInfoOptions = {
+                    multiFactorHint: multiFactorHints[0],
+                    session: resolver.session
+                };
+                const phoneAuthProvider = new PhoneAuthProvider();
+                const phoneInfoAssertion = phoneAuthProvider.verifyPhoneNumber(
+                    phoneInfoOptions,
+                    recaptchaVerifier,
+                    phoneInfoOptions
+                ).then(function (verificationId) {
+                    const verificationCode = window.prompt('Please enter the verification ' +
+                        'code that was sent to your mobile device.');
+                    const phoneAuthCredential = PhoneAuthProvider.credential(verificationId,
+                        verificationCode);
+                    const multiFactorAssertion =
+                        PhoneMultiFactorGenerator.assertion(phoneAuthCredential);
+                    return resolver.resolveSignIn(multiFactorAssertion);
+                }).then(function () {
+                  navigate('/userprofile');
+                });
+               
+            }
+            
+            
+        } else if (error.code === 'auth/wrong-password') {
+            // Handle other errors such as wrong password.
+        }
+    });
+
+    
   }
 
   const handleForgotPassword = async () => {
@@ -74,6 +113,7 @@ const UserLogin = () => {
 
   return (
     <div className="flex items-center justify-center h-screen bg-black text-gray">
+      <div id="recaptcha-container"></div>
       <div className="bg-white rounded-lg p-8 shadow-lg">
         <h1 className="text-2xl mb-4">User Login</h1>
         {verificationMessage && (
@@ -102,7 +142,7 @@ const UserLogin = () => {
           </Link>
         </p>
         {verificationMessage && (
-          <button onClick={handleSendVerificationEmail} className="w-full py-3 bg-gray-300 text-black rounded-lg mb-2">
+          <button onClick={handleSendVerificationEmail} className="w-full py-3 bg-gray-300 text-black rounded-lg mb-2" id='sign-in-button'>
             Resend Verification Email
           </button>
         )}
