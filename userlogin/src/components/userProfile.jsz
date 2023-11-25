@@ -12,13 +12,10 @@ const UserProfile = () => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       // If a user is signed in, update the state with user data
       if (user) {
-        console.log(user);
         setUser({
           uid: user.uid,
           displayName: user.displayName,
           email: user.email,
-          emailVerified: user.emailVerified,
-          phonenumber: user.phoneNumber,
           // Add more user information here
         });
       } else {
@@ -75,23 +72,20 @@ const UserProfile = () => {
             <strong>Email:</strong> {user.email}
           </div>
         )}
-        {user && user.emailVerified && (
+        {user && user.twoFactorEnabled && (
           <div className="mb-4">
-            <strong>Email Verified:</strong> Yes
+            <strong>Two-factor authentication:</strong> enabled
           </div>
         )}
-        {user && !user.emailVerified && (
+        {user && !user.twoFactorEnabled && (
           <div className="mb-4">
-            <strong>Email Verified:</strong> No
+            <strong>Two-factor authentication:</strong> disabled
           </div>
         )}
-        {user && (
-          <div className="mb-4">
-            <strong>Phone Number:</strong> {user.phonenumber}
-          </div>
-        )}
-
-       
+        {/* Add more user information here */}
+        <button onClick={handleEnableTwoFactor} className="w-full py-3 bg-blue-500 text-white rounded-lg mb-2">
+          Enable Two-Factor Authentication
+        </button>
         <button onClick={handleLogout} className="w-full py-3 bg-red-500 text-white rounded-lg">
           Log out
         </button>

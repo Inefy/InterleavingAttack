@@ -21,6 +21,7 @@ const [phoneNumber, setPhoneNumber] = useState('');
         // Update the user's display name
         await updateProfile(user, {
           displayName: displayName,
+          phoneNumber: phoneNumber,
         });
     
         // Send email verification
