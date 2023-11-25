@@ -24,4 +24,4 @@ const auth = getAuth(firebaseapp);
 
 
 
-export default auth;
+export  {auth};
