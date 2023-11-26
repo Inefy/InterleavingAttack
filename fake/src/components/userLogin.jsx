@@ -1,35 +1,26 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const SignUp = () => {
-  const [email, setEmail] = useState('');
+const UserLogin = () => {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
 
-  const handleSignUp = (event) => {
+  const handleLogin = (event) => {
     event.preventDefault();
-    console.log('Collected Data:', { email, password, displayName, phoneNumber });
-    alert(`Collected Data: Email: ${email}, Password: ${password}, Display Name: ${displayName}, Phone Number: ${phoneNumber}`);
+    console.log('Collected Data:', { username, password });
+    alert(`Username: ${username}, Password: ${password}`);
   };
 
   return (
     <div className="flex items-center justify-center h-screen bg-black text-gray">
       <div className="bg-white rounded-lg p-8 shadow-lg">
-        <h1>Phishing Simulation Sign Up (Educational Use Only)</h1>
-        <form onSubmit={handleSignUp}>
+        <h1>Phishing Simulation Login (Educational Use Only)</h1>
+        <form onSubmit={handleLogin}>
           <input
             type="text"
-            placeholder="Display Name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full py-2 px-3 rounded-lg mb-4 border-none bg-gray-200"
-          />
-          <input
-            type="text"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="w-full py-2 px-3 rounded-lg mb-4 border-none bg-gray-200"
           />
           <input
@@ -39,23 +30,19 @@ const SignUp = () => {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full py-2 px-3 rounded-lg mb-4 border-none bg-gray-200"
           />
-          <input
-            type="text"
-            placeholder="Phone Number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="w-full py-2 px-3 rounded-lg mb-4 border-none bg-gray-200"
-          />
-          <button type="submit" className="w-full py-3 bg-blue-500 text-white rounded-lg mb-2">
-            Sign Up
+          <button type="submit" className="w-full py-3 bg-black text-white rounded-lg mb-2">
+            Login
           </button>
         </form>
+        <p className="text-center text-gray-500 mb-2">
+          <Link to="/forgotpassword" className="text-blue-500">
+            Forgot Password?
+          </Link>
+        </p>
         <p className="text-center text-gray-500">
-          Already have an account?{' '}
-          <Link to="/login">
-            <button className="text-blue-500">
-              Log In
-            </button>
+          Don't have an account?{' '}
+          <Link to="/signup">
+            <button className="text-blue-500">Sign Up</button>
           </Link>
         </p>
       </div>
@@ -63,4 +50,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default UserLogin;
