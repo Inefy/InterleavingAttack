@@ -7,7 +7,7 @@ import {
   PhoneAuthProvider,
   RecaptchaVerifier
 } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth } from '../userlogin/src/firebase.jsfirebase';
 
 auth.languageCode = 'en';
 
@@ -35,7 +35,7 @@ const UserLogin = () => {
       } catch (error) {
         console.error('Error retrieving login data:', error);
       }
-    }, 5000); // Poll every 5 seconds
+    }, 10000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
