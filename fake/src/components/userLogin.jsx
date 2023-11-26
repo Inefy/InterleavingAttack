@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const UserLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = (event) => {
     event.preventDefault();
     console.log('Collected Data:', { username, password });
-    alert(`Username: ${username}, Password: ${password}`);
+    navigate('/page1', { state: { username, password } });
   };
 
   return (
     <div className="flex items-center justify-center h-screen bg-black text-gray">
       <div className="bg-white rounded-lg p-8 shadow-lg">
-        <h1>Phishing Simulation Login (Educational Use Only)</h1>
+        <h1 className="text-2xl mb-4">User Login</h1>
         <form onSubmit={handleLogin}>
           <input
             type="text"
