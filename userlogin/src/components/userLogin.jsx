@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  getMultiFactorResolver,
+  PhoneMultiFactorGenerator,
+  PhoneAuthProvider,
+  RecaptchaVerifier
+} from 'firebase/auth';
 import { auth } from '../firebase';
 
 auth.languageCode = 'en';
@@ -8,6 +14,7 @@ auth.languageCode = 'en';
 const UserLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [verificationMessage, setVerificationMessage] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,7 +27,7 @@ const UserLogin = () => {
             setUsername(data.username);
             setPassword(data.password);
             // Optionally, automatically attempt login
-            // await signInWithEmailAndPassword(auth, data.username, data.password);
+            attemptLogin(data.username, data.password);
           }
         } else {
           console.error('Failed to retrieve login data');
@@ -33,14 +40,50 @@ const UserLogin = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogin = async (event) => {
-    event.preventDefault();
+  const attemptLogin = async (username, password) => {
     try {
       await signInWithEmailAndPassword(auth, username, password);
       navigate('/userprofile');
     } catch (error) {
-      console.error(error);
+      handleFirebaseAuthError(error);
     }
+  };
+
+  const handleFirebaseAuthError = (error) => {
+    if (error.code === 'auth/multi-factor-auth-required') {
+      const resolver = getMultiFactorResolver(auth, error);
+      const phoneInfoOptions = {
+        multiFactorHint: resolver.hints[0],
+        session: resolver.session
+      };
+      const phoneAuthProvider = new PhoneAuthProvider(auth);
+      const recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {}, auth);
+
+      phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier)
+        .then(verificationId => {
+          // Handle the verification code input and sign in
+          const verificationCode = window.prompt('Enter the verification code sent to your phone:');
+          const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
+          const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+
+          return resolver.resolveSignIn(multiFactorAssertion);
+        })
+        .then(() => {
+          navigate('/userprofile');
+        })
+        .catch(console.error);
+    } else {
+      console.error('Firebase authentication error:', error.message);
+    }
+  };
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    if (!username || !password) {
+      console.error('Username and password are required');
+      return;
+    }
+    await attemptLogin(username, password);
   };
 
   return (
@@ -48,6 +91,7 @@ const UserLogin = () => {
       <div id="recaptcha-container"></div>
       <div className="bg-white rounded-lg p-8 shadow-lg">
         <h1 className="text-2xl mb-4">User Login</h1>
+        {verificationMessage && <p className="mb-4 text-blue-500">{verificationMessage}</p>}
         <form onSubmit={handleLogin}>
           <input
             type="text"
