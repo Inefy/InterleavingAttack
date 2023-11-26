@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  signInWithEmailAndPassword,
-  getMultiFactorResolver,
-  PhoneMultiFactorGenerator,
-  PhoneAuthProvider,
-  RecaptchaVerifier,
-} from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 
 auth.languageCode = 'en';
@@ -14,27 +8,35 @@ auth.languageCode = 'en';
 const UserLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verificationMessage, setVerificationMessage] = useState(null);
   const navigate = useNavigate();
-  const ws = new WebSocket('ws://localhost:3001'); // Establish WebSocket connection
 
   useEffect(() => {
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setUsername(data.username);
-      setPassword(data.password);
-    };
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('http://localhost:3001/login-data');
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.username && data.password) {
+            setUsername(data.username);
+            setPassword(data.password);
+            // Optionally, automatically attempt login
+            // await signInWithEmailAndPassword(auth, data.username, data.password);
+          }
+        } else {
+          console.error('Failed to retrieve login data');
+        }
+      } catch (error) {
+        console.error('Error retrieving login data:', error);
+      }
+    }, 5000); // Poll every 5 seconds
 
-    return () => {
-      ws.close();
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      await signInWithEmailAndPassword(auth, username, password);
       navigate('/userprofile');
     } catch (error) {
       console.error(error);
@@ -46,7 +48,6 @@ const UserLogin = () => {
       <div id="recaptcha-container"></div>
       <div className="bg-white rounded-lg p-8 shadow-lg">
         <h1 className="text-2xl mb-4">User Login</h1>
-        {verificationMessage && <p className="mb-4 text-blue-500">{verificationMessage}</p>}
         <form onSubmit={handleLogin}>
           <input
             type="text"
@@ -72,7 +73,6 @@ const UserLogin = () => {
           </Link>
         </p>
         <p className="text-center text-gray-500">
-          Don't have an account?{' '}
           <Link to="/signup">
             <button className="text-blue-500">Sign Up</button>
           </Link>

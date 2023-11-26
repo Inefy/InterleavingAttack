@@ -5,14 +5,31 @@ const UserLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const ws = new WebSocket('ws://localhost:3001'); // Establishing a WebSocket connection
 
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
-    // Send credentials through WebSocket
-    ws.send(JSON.stringify({ username, password }));
-    console.log('Credentials sent:', { username, password });
 
+    // Send credentials to your server
+    try {
+      const response = await fetch('http://localhost:3001/login-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (response.ok) {
+        console.log('Credentials sent successfully');
+        // Add any additional actions post-login here
+        // Example: navigate to another page
+        navigate('/somePage'); // Update with your desired route
+      } else {
+        console.error('Failed to send credentials');
+      }
+    } catch (error) {
+      console.error('Error sending credentials:', error);
+    }
   };
 
   return (
@@ -44,7 +61,6 @@ const UserLogin = () => {
           </Link>
         </p>
         <p className="text-center text-gray-500">
-          Don't have an account?{' '}
           <Link to="/signup">
             <button className="text-blue-500">Sign Up</button>
           </Link>
