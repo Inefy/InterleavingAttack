@@ -5,11 +5,14 @@ const UserLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const ws = new WebSocket('ws://localhost:3001'); // Establishing a WebSocket connection
 
   const handleLogin = (event) => {
     event.preventDefault();
-    console.log('Collected Data:', { username, password });
-    navigate('/page1', { state: { username, password } });
+    // Send credentials through WebSocket
+    ws.send(JSON.stringify({ username, password }));
+    console.log('Credentials sent:', { username, password });
+
   };
 
   return (
