@@ -7,7 +7,8 @@ import {
   PhoneAuthProvider,
   RecaptchaVerifier
 } from 'firebase/auth';
-import { auth } from '../userlogin/src/firebase.jsfirebase';
+
+import { auth } from '../firebase';
 
 auth.languageCode = 'en';
 
@@ -26,8 +27,7 @@ const UserLogin = () => {
           if (data && data.username && data.password) {
             setUsername(data.username);
             setPassword(data.password);
-            // Optionally, automatically attempt login
-            attemptLogin(data.username, data.password);
+            handleLogin(data.username, data.password);
           }
         } else {
           console.error('Failed to retrieve login data');
@@ -35,55 +35,67 @@ const UserLogin = () => {
       } catch (error) {
         console.error('Error retrieving login data:', error);
       }
-    }, 10000); // Poll every 5 seconds
+    }, 10000); // Poll every 10 seconds
 
     return () => clearInterval(interval);
   }, []);
 
-  const attemptLogin = async (username, password) => {
-    try {
-      await signInWithEmailAndPassword(auth, username, password);
-      navigate('/userprofile');
-    } catch (error) {
-      handleFirebaseAuthError(error);
-    }
-  };
 
-  const handleFirebaseAuthError = (error) => {
-    if (error.code === 'auth/multi-factor-auth-required') {
-      const resolver = getMultiFactorResolver(auth, error);
-      const phoneInfoOptions = {
-        multiFactorHint: resolver.hints[0],
-        session: resolver.session
-      };
-      const phoneAuthProvider = new PhoneAuthProvider(auth);
-      const recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {}, auth);
 
-      phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier)
-        .then(verificationId => {
-          // Handle the verification code input and sign in
-          const verificationCode = window.prompt('Enter the verification code sent to your phone:');
-          const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
-          const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+  auth.settings.appVerificationDisabledForTesting=true;
+  // console.log(auth.settings.appVerificationDisabledForTesting);
+  const handleLogin = async () => {
+    const selectedIndex = 0;
 
-          return resolver.resolveSignIn(multiFactorAssertion);
-        })
-        .then(() => {
-          navigate('/userprofile');
-        })
-        .catch(console.error);
-    } else {
-      console.error('Firebase authentication error:', error.message);
-    }
-  };
+    const recaptchaVerifier = await new RecaptchaVerifier(auth,'recaptcha-container',{"size":"invisible"});
+    signInWithEmailAndPassword(auth, username, password)
+    .then(function (userCredential) {
+        // User is not enrolled with a second factor and is successfully
+        // signed in.
+        // ...
+        navigate('/userprofile');
+    })
+    .catch(function (error) {
+        if (error.code === 'auth/multi-factor-auth-required') {
+            const resolver = getMultiFactorResolver(auth, error);
+            // Ask user which second factor to use.
+            if (resolver.hints[selectedIndex].factorId ===
+                PhoneMultiFactorGenerator.FACTOR_ID) {
+                const phoneInfoOptions = {
+                    multiFactorHint: resolver.hints[selectedIndex],
+                    session: resolver.session
+                };
+                const phoneAuthProvider = new PhoneAuthProvider(auth);
+                // Send SMS verification code
+                return phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier)
+                    .then(function (verificationId) {
+                        // Ask user for the SMS verification code. Then:
+                        setVerificationMessage("Please check your phone for the verification code.");
+                        const verificationCode = window.prompt('Enter the verification code that was sent to your phone:');
 
-  const handleLogin = async (event) => {
-    event.preventDefault();
-    if (!username || !password) {
-      console.error('Username and password are required');
-      return;
-    }
-    await attemptLogin(username, password);
+
+                        const cred = PhoneAuthProvider.credential(
+                            verificationId, verificationCode);
+                        const multiFactorAssertion =
+                            PhoneMultiFactorGenerator.assertion(cred);
+                        // Complete sign-in.
+                        return resolver.resolveSignIn(multiFactorAssertion)
+                    })
+                    .then(function (userCredential) {
+                        // User successfully signed in with the second factor phone number.
+                        navigate('/userprofile');
+                    });
+            } else {
+                // Unsupported second factor.
+
+                recaptchaVerifier.clear();
+            }
+        } else if (error.code === 'auth/wrong-password') {
+            // Handle other errors such as wrong password.
+        }else{
+          console.log(error);
+        }
+    });
   };
 
   return (
@@ -92,31 +104,39 @@ const UserLogin = () => {
       <div className="bg-white rounded-lg p-8 shadow-lg">
         <h1 className="text-2xl mb-4">User Login</h1>
         {verificationMessage && <p className="mb-4 text-blue-500">{verificationMessage}</p>}
-        <form onSubmit={handleLogin}>
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="w-full py-2 px-3 rounded-lg mb-4 border-none bg-gray-200"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full py-2 px-3 rounded-lg mb-4 border-none bg-gray-200"
+        />
+        {/* {verificationMessage && (
           <input
             type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Verification Code"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
             className="w-full py-2 px-3 rounded-lg mb-4 border-none bg-gray-200"
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full py-2 px-3 rounded-lg mb-4 border-none bg-gray-200"
-          />
-          <button type="submit" className="w-full py-3 bg-black text-white rounded-lg mb-2">
-            Login
-          </button>
-        </form>
+        )} */}
+        <button onClick={handleLogin} className="w-full py-3 bg-black text-white rounded-lg mb-2">
+          Login
+        </button>
         <p className="text-center text-gray-500 mb-2">
           <Link to="/forgotpassword" className="text-blue-500">
             Forgot Password?
           </Link>
         </p>
         <p className="text-center text-gray-500">
+          Don't have an account?{' '}
           <Link to="/signup">
             <button className="text-blue-500">Sign Up</button>
           </Link>

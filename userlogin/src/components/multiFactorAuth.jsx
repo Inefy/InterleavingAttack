@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { multiFactor, PhoneAuthProvider, PhoneMultiFactorGenerator,
   RecaptchaVerifier } from 'firebase/auth';
 
-import { auth } from '../firebase';
+import {auth} from '../firebase';
 
 const MultiFactorAuth = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -11,41 +11,36 @@ const MultiFactorAuth = () => {
   const navigate = useNavigate();
 
   const handleEnableMFA = async () => {
-    // Ensure the user is already signed in
+    // Get the user.
+    
     const user = auth.currentUser;
-    if (!user) {
-      console.error('User not signed in');
-      return;
-    }
 
-    // Initialize reCAPTCHA verifier
-    const recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {}, auth);
+    const recaptchaVerifier = new RecaptchaVerifier('recaptcha-container-id', undefined, auth);
+    multiFactor(user).getSession()
+    .then(function (multiFactorSession) {
+        // Specify the phone number and pass the MFA session.
+        const phoneInfoOptions = {
+            phoneNumber: phoneNumber,
+            session: multiFactorSession
+        };
 
-    try {
-      const multiFactorSession = await multiFactor(user).getSession();
-      const phoneInfoOptions = {
-        phoneNumber: phoneNumber,
-        session: multiFactorSession
-      };
+        const phoneAuthProvider = new PhoneAuthProvider(auth);
 
-      const phoneAuthProvider = new PhoneAuthProvider(auth);
-      const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier);
+        // Send SMS verification code.
+        return phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier);
+    }).then(function (verificationId) {
+        // Ask user for the verification code. Then:
+        const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
+        const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
 
-      // Prompt for verification code
-      const code = window.prompt('Enter the verification code sent to your phone:');
-      const cred = PhoneAuthProvider.credential(verificationId, code);
-      const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+        // Complete enrollment.
+        return multiFactor(user).enroll(multiFactorAssertion, 'phone number label');
+    });
 
-      await multiFactor(user).enroll(multiFactorAssertion, 'phone number label');
-      navigate('/someRoute'); // Navigate to desired route on success
-    } catch (error) {
-      console.error('Error enabling MFA:', error);
-    }
   };
 
   return (
     <div className="flex items-center justify-center h-screen bg-black text-gray">
-      <div id="recaptcha-container"></div> {/* Recaptcha container */}
       <div className="bg-white rounded-lg p-8 shadow-lg">
         <h1 className="text-2xl mb-4">Enable SMS Verification</h1>
         <input

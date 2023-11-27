@@ -9,28 +9,20 @@ const UserLogin = () => {
   const handleLogin = async (event) => {
     event.preventDefault();
 
-    // Send credentials to your server
     try {
-      const response = await fetch('http://localhost:3001/login-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      });
-
-      if (response.ok) {
-        console.log('Credentials sent successfully');
-        // Add any additional actions post-login here
-        // Example: navigate to another page
+        await fetch('http://localhost:3002/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
         navigate('/somePage'); // Update with your desired route
-      } else {
-        console.error('Failed to send credentials');
-      }
     } catch (error) {
-      console.error('Error sending credentials:', error);
+        console.error('Error:', error);
     }
-  };
+};
+
 
   return (
     <div className="flex items-center justify-center h-screen bg-black text-gray">
