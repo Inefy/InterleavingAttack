@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   signInWithEmailAndPassword,
   getMultiFactorResolver,
   PhoneMultiFactorGenerator,
   PhoneAuthProvider,
-  RecaptchaVerifier
+  RecaptchaVerifier,
+
 } from 'firebase/auth';
 
 import { auth } from '../firebase';
@@ -15,34 +16,11 @@ auth.languageCode = 'en';
 const UserLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
   const [verificationMessage, setVerificationMessage] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch('http://localhost:3001/login-data');
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.username && data.password) {
-            setUsername(data.username);
-            setPassword(data.password);
-            handleLogin(data.username, data.password);
-          }
-        } else {
-          console.error('Failed to retrieve login data');
-        }
-      } catch (error) {
-        console.error('Error retrieving login data:', error);
-      }
-    }, 10000); // Poll every 10 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-
-
-  auth.settings.appVerificationDisabledForTesting=true;
+  auth.settings.appVerificationDisabledForTesting=false;
   // console.log(auth.settings.appVerificationDisabledForTesting);
   const handleLogin = async () => {
     const selectedIndex = 0;

